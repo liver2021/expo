@@ -38,7 +38,7 @@ def get_db_secret(secret_name, region_name="us-east-1"):
 
 
 # Replace with your secret name and region
-secret_name = "aws/secret"
+secret_name = "secret/psql"
 region_name = "us-east-1"
 
 # Retrieve the secret dict containing keys like DB_USER, DB_PASSWORD, etc.
