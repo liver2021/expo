@@ -8,11 +8,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy rest of the app
+# Copy rest of the application
 COPY . .
 
 # Expose port Elastic Beanstalk expects
 EXPOSE 5000
 
-# Run Flask app via Gunicorn (EB-friendly)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# Run Flask application via Gunicorn (EB-friendly)
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "application:application"]
