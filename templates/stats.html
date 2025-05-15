@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Transaktionsstatistik</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body class="bg-light">
+ <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('dashboard') }}">Finance Tracker 💼</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('input_data') }}">New Transaction</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('charts') }}">History</a>
+                </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('stats') }}">Stats</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+</div>
+
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Transaktionsübersicht nach Kategorie</h2>
+
+    <form method="get" action="{{ url_for('stats') }}" class="text-center mb-4">
+        <label for="type" class="form-label me-2">Typ:</label>
+        <select name="type" id="type" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
+            <option value="Ausgaben" {{ 'selected' if selected_type == 'Ausgaben' else '' }}>Ausgaben</option>
+            <option value="Zuflüsse" {{ 'selected' if selected_type == 'Zuflüsse' else '' }}>Zuflüsse</option>
+        </select>
+    </form>
+
+    <div class="row justify-content-center align-items-center mb-5">
+        <div class="col-md-6 d-flex justify-content-center">
+            <div id="donutChart" style="width:400px;height:300px;"></div>
+        </div>
+        <div class="col-md-4 d-flex justify-content-center">
+            <div class="card shadow-sm p-4 bg-white rounded" style="min-width: 300px;">
+                <h4 class="text-center">📈 - 📉 </h4>
+                <p class="text-center fs-3 fw-bold text-{{ 'success' if net_balance >= 0 else 'danger' }}">
+                    {{ net_balance }} €
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5 pt-5">
+        <h2 class="text-center mb-4">Zeitliche Entwicklung der {{ selected_type }} nach Kategorie</h2>
+        <div id="stackedBarChart" style="width:100%; height:500px;"></div>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Donut Chart
+    const chartData = {{ chart_data | tojson }};
+    const labels = Object.keys(chartData);
+    const values = Object.values(chartData);
+    const donutData = [{
+        values: values,
+        labels: labels,
+        type: 'pie',
+        hole: 0.4,
+        marker: {
+            line: { color: 'white', width: 2 },
+            colors: [
+                '#1b9e77', '#d95f02', '#7570b3', '#e7298a',
+                '#66a61e', '#e6ab02', '#a6761d', '#666666',
+                '#8dd3c7', '#fb8072'
+            ]
+        },
+        textinfo: 'label+percent',
+        hoverinfo: 'label+value+percent',
+        opacity: 0.7,
+        textfont: { size: 14, family: 'Arial, sans-serif', color: 'black' }
+    }];
+    const donutLayout = {
+        title: {
+            text: 'Verteilung der {{ selected_type }} nach Kategorie',
+            font: { size: 18, family: 'Arial Black, Gadget, sans-serif', color: '#333' }
+        },
+        height: 350,
+        width: 450,
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        showlegend: false
+    };
+    Plotly.newPlot('donutChart', donutData, donutLayout, {displayModeBar: false});
+
+    // Stacked Bar Chart
+    const timeSeriesData = {{ time_series_data | tojson }};
+    const monthsSet = new Set();
+    for (const category in timeSeriesData) {
+        for (const month in timeSeriesData[category]) {
+            monthsSet.add(month);
+        }
+    }
+    const months = Array.from(monthsSet).sort();
+
+    const colors = [
+        '#1b9e77', '#d95f02', '#7570b3', '#e7298a',
+        '#66a61e', '#e6ab02', '#a6761d', '#666666',
+        '#8dd3c7', '#fb8072'
+    ];
+
+    const traces = [];
+    let i = 0;
+    for (const [category, data] of Object.entries(timeSeriesData)) {
+        const values = months.map(month => data[month] || 0);
+        traces.push({
+            x: months,
+            y: values,
+            name: category,
+            type: 'bar',
+            opacity: 0.6,
+            marker: {
+                color: colors[i % colors.length],
+                line: { width: 1, color: '#fff' }
+            },
+            hovertemplate: `${category}: %{y:.2f} €<extra></extra>`
+        });
+        i++;
+    }
+
+    const barLayout = {
+        barmode: 'stack',
+        xaxis: { title: 'Monat', type: 'category', tickfont: { size: 14 }, showgrid: false },
+        yaxis: { title: 'Betrag (€)', tickfont: { size: 14 }, gridcolor: '#eee' },
+        legend: { x: 0, y: 1.2, orientation: 'h' },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 60, b: 80 },
+        transition: { duration: 500, easing: 'cubic-in-out' }
+    };
+
+    Plotly.newPlot('stackedBarChart', traces, barLayout, {
+        responsive: true,
+        displayModeBar: false
+    });
+});
+</script>
+
+<div class="container mt-4">
+    <div class="card shadow-sm p-4 bg-white rounded">
+        <h4 class="mb-3">Erläuterung der Ausgabenkategorien</h4>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item"><strong>Lebensmittel:</strong> Einkäufe im Supermarkt, Bäckerei oder Markt.</li>
+            <li class="list-group-item"><strong>Miete:</strong> Monatliche Wohnkosten wie Miete und Nebenkosten.</li>
+            <li class="list-group-item"><strong>Versicherungen:</strong> Zahlungen für Kranken-, Haftpflicht- oder andere Versicherungen.</li>
+            <li class="list-group-item"><strong>Freizeit:</strong> Ausgaben für Kino, Sport, Hobbys und Ausgehen.</li>
+            <li class="list-group-item"><strong>Reisen:</strong> Kosten für Urlaub, Hotels, Flüge oder Bahnfahrten.</li>
+            <li class="list-group-item"><strong>Gesundheit:</strong> Arztbesuche, Medikamente und andere medizinische Ausgaben.</li>
+            <li class="list-group-item"><strong>Transport:</strong> Öffentliche Verkehrsmittel, Benzin oder Fahrradreparaturen.</li>
+            <li class="list-group-item"><strong>Haushalt:</strong> Reinigungsmittel, Möbel, Werkzeuge oder andere Haushaltsanschaffungen.</li>
+            <li class="list-group-item"><strong>Bildung:</strong> Studiengebühren, Bücher oder Online-Kurse.</li>
+            <li class="list-group-item"><strong>Sonstiges:</strong> Alle nicht zuordenbaren oder unregelmäßigen Ausgaben.</li>
+        </ul>
+    </div>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('dashboard') }}">Finance Tracker 💼</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('input_data') }}">New Transaction</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('charts') }}">History</a>
+                </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('stats') }}">Stats</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+     <!-- Flash messages -->
+<div class="container mt-3">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+    <div class="container text-center mt-5">
+        <h1>Welcome to Your Dashboard!</h1>
+        <p>You are logged in.</p>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </div>
+<div class="container mt-5">
+  <div class="card shadow-sm p-4 bg-white rounded">
+    <h3 class="mb-3 text-center">💰 Der Schlüssel zu erfolgreichem Geldmanagement</h3>
+    <p>
+      Geld ist mehr als nur ein Zahlungsmittel – es ist dein Werkzeug für Freiheit und Zukunftssicherheit. Mit klarem Budget, regelmäßiger Ausgabenkontrolle und gezielten Sparzielen bringst du Ordnung in deine Finanzen.
+    </p>
+    <p>
+      Schon kleine, bewusste Schritte helfen dir, dein Geld effizient einzusetzen. Nutze deine Daten, analysiere deine Ausgaben und arbeite auf deine Träume hin. Du hast die Kontrolle – fang heute an!
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

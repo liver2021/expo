@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Finance Tracker - Charts</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+ <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('dashboard') }}">Finance Tracker 💼</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('input_data') }}">New Transaction</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('charts') }}">History</a>
+                </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('stats') }}">Stats</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+    <!-- Transactions Section -->
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Your Transactions</h2>
+
+        <!-- Filter Form -->
+        <form method="GET" class="text-center mb-4">
+            <label for="category">Filter by Category:</label>
+            <select name="category" id="category" class="form-select d-inline-block w-auto mx-2">
+                <option value="">All</option>
+                <option value="Food" {% if selected_category == 'Food' %}selected{% endif %}>Food</option>
+                <option value="Living" {% if selected_category == 'Living' %}selected{% endif %}>Living</option>
+                <option value="Hobby" {% if selected_category == 'Hobby' %}selected{% endif %}>Hobby</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+
+        <!-- Transactions Table -->
+        <div class="card shadow p-4">
+            {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Amount (€)</th>
+                                <th>Action</th>
+                                <th>Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for txn in transactions %}
+                                <tr>
+                                    <td>{{ txn.category }}</td>
+                                    <td>
+                                        {% if txn.transaction_type == 'Expense' %}
+                                            <span class="text-danger">{{ txn.transaction_type }}</span>
+                                        {% else %}
+                                            <span class="text-success">{{ txn.transaction_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ "%.2f"|format(txn.amount) }}</td>
+                                    <td>
+                                    <form method="POST" action="{{ url_for('delete_transaction', txn_id=txn.id) }}" onsubmit="return confirm('Are you sure you want to delete this transaction?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('edit_transaction', txn_id=txn.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center">No transactions found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+<div class="d-flex justify-content-center mt-5 mb-4">
+    <a href="{{ url_for('download_csv', category=selected_category) }}" class="btn btn-outline-success btn-lg">
+        📥 Gefilterte CSV herunterladen
+    </a>
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
